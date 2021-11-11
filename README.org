@@ -1,0 +1,57 @@
+#+title: Org Music
+#+author: tecosaur
+
+This adds a new link type, =[[music:artist:song]]=.
+
+* Link examples
+
+=[[music:De/Vision:Deep Blue]]= Refers to the song /Deep Blue/ by /De/Vision/.
+Exporting gives =Deep Blue by De/Vision=, and following the link in Emacs plays
+the song from the beginning.
+
+=[[music:De/Vision:Deep Blue::104s]]= simply refers to the same song 104 seconds
+in. This exports as =104 seconds into Deep Blue by De/Vision=.
+
+When exporting to HTML or LaTeX there is a variant of the =[[music:]]= link which
+may be of interest --- =[[Music:]]=. This functions identically, however is a bit
+fancier when exported.
+
+When exporting to HTML, =[[music:De/Vision:Deep Blue]]= produces:
+#+begin_src html
+<div class='music-track'>
+  <a target="_blank" href="https://www.youtube.com/watch?v=cV8c9Vxz3fY">
+    <img src='http://coverartarchive.org/release/fc9ffbd5-e3b1-487b-acdf-3584495b7b28/6088153643-250.jpg'></a>
+  <span><a target="_blank" title="De/vision Deep Blue"
+           href="https://www.youtube.com/watch?v=cV8c9Vxz3fY">
+      <span style="font-style: italic">Deep Blue</span>
+      <br><small>Noob</small><br>by De/Vision</a></span>
+</div>
+#+end_src
+
+Similarly, exporting to LaTeX produces:
+#+begin_src LaTeX
+\begin{tabular}{@{\hspace{0.3\columnwidth}}r@{\hspace{0.1\columnwidth}}p{0.4\columnwidth}}
+  \includegraphics[height=6em]{/home/tec/Music/De_Vision/Noob/cover.jpg}
+  & \vspace{-0.12\columnwidth}\href{https://www.youtube.com/watch?v=cV8c9Vxz3fY}%
+    {\emph{Deep Blue}\newline {\footnotesize Noob}\newline by De/Vision}
+\end{tabular}
+#+end_src
+
+* Settings
+** Beets integration
+
+When ~org-music-track-search-method~ is set to ~beets~, music tracks will be located
+by querying [[https://beets.io/][beets]]' database (~org-music-beets-db~).
+
+A number of other features are only work with Beets, such as =M-x org-music-search-and-play=.
+
+** Youtube integration
+
+When a youtube API key is provided (see ~org-music-youtube-api-key~), the track
+metadata is used to fetch a youtube URL to the track, which is used when exporting.
+
+** Music player
+
+Currently only music players that work with MPRIS are supported. When
+~org-music-mpris-player~ is ~nil~, the MPRIS player is guessed by looking for
+registered dbus services which use the =org.mpris.MediaPlayer2= interface.
