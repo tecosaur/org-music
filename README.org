@@ -1,6 +1,9 @@
 #+title: Org Music
 #+author: tecosaur
 
+#+html: <p><img src="https://img.shields.io/badge/Emacs-27.1+-blueviolet.svg?style=flat-square&logo=GNU%20Emacs&logoColor=white">
+#+html: <img src="https://img.shields.io/badge/stage-%CE%B1,%20experimental-red?style=flat-square"></p>
+
 This adds a new link type, =[[music:artist:song]]=.
 
 * Link examples
