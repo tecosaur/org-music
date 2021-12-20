@@ -19,6 +19,8 @@
 ;;
 ;;; Code:
 
+(require 'rng-uri)
+(require 'ox)
 (require 'dbus)
 (require 'dash)
 
