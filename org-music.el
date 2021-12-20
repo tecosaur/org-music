@@ -409,7 +409,8 @@ This action is reversed by `org-music-time-to-seconds'."
          (start-time (nth 2 track-info))
          (end-time (nth 3 track-info))
          (youtube (org-music-youtube-track artist track))
-         (url (org-music-youtube-track-url youtube start-time))
+         (url (or (org-music-youtube-track-url youtube start-time)
+                  (org-music-default-url artist track)))
          (link (lambda (body)
                  (if (not url) body
                    (cond ((org-export-derived-backend-p backend 'html)
@@ -487,6 +488,11 @@ This action is reversed by `org-music-time-to-seconds'."
             (when (and start-time (/= 0 start-time))
               (format "&t=%d" start-time)))))
 
+(defun org-music-default-url (artist track)
+  (concat "https://www.youtube.com/results?search_query="
+          (url-hexify-string
+           (concat artist " - " track))))
+
 (defun org-music-kid3-cmd (cmd file)
   (with-temp-buffer
     (call-process
@@ -525,8 +531,10 @@ This action is reversed by `org-music-time-to-seconds'."
   (let* ((track-data (org-music-parse-link path))
          (file (org-music-find-track-file
                 (nth 0 track-data) (nth 1 track-data)))
-         (url (org-music-youtube-track-url (org-music-youtube-track (nth 0 track-data) (nth 1 track-data))
-                                           (nth 2 track-data)))
+         (url (or (org-music-youtube-track-url (org-music-youtube-track (nth 0 track-data)
+                                                                        (nth 1 track-data))
+                                               (nth 2 track-data))
+                  (org-music-default-url (nth 0 track-data) (nth 1 track-data))))
          (cover-img (if (org-export-derived-backend-p backend 'html)
                         (if org-music-album-art-inline
                             (concat
