@@ -26,8 +26,14 @@
 
 ;;; Variables
 
-(defvar org-music-player 'mpris
-  "Music player type. Curretly only supports mpris.")
+(defgroup org-music nil
+  "Org music: links"
+  :group 'org-link
+  :prefix "org-music-")
+(defcustom org-music-player 'mpris
+  "Music player type. Curretly values of `mpris' and `mpd' are supported."
+  :type '(choice (const mpris) (const mpd))
+  :group 'org-music)
 (defvar org-music-mpris-player nil
   "Name of the mpris player, used in the form org.mpris.MediaPlayer2.PLAYER.
 If nil, this is guesed using `org-music-guess-mpris-player'.")
@@ -72,7 +78,41 @@ by looking for the password of an entry for googleapis.com.")
                           (if display-mode "M" "m")
                           (org-music-format-link artist track start-time) track artist)
                 (org-music-format-link artist track start-time))))
+    ('mpd (org-music-get-link-mpd full include-time display-mode))
     (_ (user-error! "The specified music player: %s is not supported" org-music-player))))
+
+(defun org-music-get-link-mpd (full &optional include-time display-mode)
+  (with-temp-buffer
+    (call-process "mpc" nil t nil "-f"
+                  "%artist%\n%title%")
+    (goto-char (point-min))
+    ;; parse process output with great pain
+    (unless
+        (looking-at
+         (rx (group (zero-or-more not-newline)) ; artist
+             "\n"
+             (group (zero-or-more not-newline)) ; track
+             "\n"
+             ;; skip song info line until e.g 3:45/5:07
+             (or "[paused]" "[playing]")
+             (one-or-more whitespace)
+             "#" (one-or-more (any "0-9")) "/" (one-or-more (any "0-9"))
+             (one-or-more whitespace)
+             (group (one-or-more (any "0-9"))) ; minutes
+             ":"
+             (group (one-or-more (any "0-9"))) ; seconds
+             "/"))
+      (error "couldn't parse mpc -f output"))
+    (let ((artist (match-string 1))
+          (track (match-string 2))
+          (start-time (when include-time
+                        (+ (* 60 (string-to-number (match-string 3)))
+                           (string-to-number (match-string 4))))))
+      (if full
+          (format "[[%susic:%s][%s by %s]]"
+                  (if display-mode "M" "m")
+                  (org-music-format-link artist track start-time) track artist)
+        (org-music-format-link artist track start-time)))))
 
 (defun org-music-format-link (artist track &optional start-time end-time)
   (let ((artist (replace-regexp-in-string ":" "\\\\:" artist))
@@ -127,9 +167,21 @@ This action is reversed by `org-music-time-to-seconds'."
   (if-let ((file (org-music-find-track-file artist title)))
       (pcase org-music-player
         ('mpris (org-music-mpris-play file start-time end-time))
+        ('mpd (org-music-mpd-play file start-time end-time))
         (_ (user-error! "The specified music player: %s is not supported" org-music-player)))
     (user-error! "Could not find the track '%s' by '%s'" title artist)))
 
+(defun org-music-mpd-play (file &optional start-time end-time)
+  (let ((local-file (string-trim-left (expand-file-name file)
+                                      (regexp-quote
+                                       (expand-file-name org-music-folder)))))
+    (call-process "mpc" nil nil nil "prev" file) ; try not to override current
+    (unless (eq 0 (call-process "mpc" nil nil nil "insert" local-file))
+      (user-error "Can't `mpc insert %s'" local-file))
+    (call-process "mpc" nil nil nil "next")
+    (when start-time (call-process "mpc" nil nil nil "seek"
+                                   (number-to-string start-time)))
+    (ignore end-time))) ; yep
 (defun org-music-mpris-play (file &optional start-time end-time)
   (let ((uri (url-encode-url (rng-file-name-uri file))))
     (org-music-mpris-call-method "OpenUri" uri)
