@@ -315,11 +315,13 @@ This action is reversed by `org-music-time-to-seconds'."
   "Return a Music:search result string, from an interactive search."
   (concat "Music:" (org-music-beets-search)))
 
+;;;###autoload
 (defun org-music-search-and-play ()
   "Search for a track, and play it immediately."
   (interactive)
   (apply #'org-music-play-track (org-music-beets-search)))
 
+;;;###autoload
 (defun org-music-search-and-insert ()
   "Search for a track, and insert it as a link."
   (interactive)
@@ -391,6 +393,7 @@ This action is reversed by `org-music-time-to-seconds'."
 (defun org-music-open-fn (link)
   (apply #'org-music-play-track (org-music-parse-link link)))
 
+;;;###autoload
 (defun org-music-insert-current-track (&optional include-time)
   "Insert link to currest track, including a timestamp when the universal argument is supplied."
   (interactive "P")
